@@ -2,12 +2,15 @@ package net.gegy1000.tictacs.chunk.upgrade;
 
 import net.gegy1000.justnow.future.Future;
 import net.gegy1000.justnow.tuple.Unit;
+import net.gegy1000.tictacs.async.lock.Lock;
+import net.gegy1000.tictacs.async.lock.NullLock;
 import net.gegy1000.tictacs.async.lock.Semaphore;
 import net.gegy1000.tictacs.async.worker.ChunkExecutor;
 import net.gegy1000.tictacs.chunk.ChunkController;
 import net.gegy1000.tictacs.chunk.entry.ChunkEntry;
 import net.gegy1000.tictacs.chunk.step.ChunkStep;
 import net.gegy1000.tictacs.chunk.step.ChunkStepContext;
+import net.gegy1000.tictacs.compatibility.TicTacsCompatibility;
 import net.minecraft.server.world.ServerLightingProvider;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureManager;
@@ -28,7 +31,7 @@ public final class ChunkUpgrader {
     private final StructureManager structures;
     private final ServerLightingProvider lighting;
 
-    public final Semaphore lightingThrottler = new Semaphore(24);
+    public final Lock lightingThrottler = TicTacsCompatibility.STARLIGHT_LOADED ? NullLock.INSTANCE : new Semaphore(32);
 
     public ChunkUpgrader(
             ServerWorld world,
@@ -66,7 +69,7 @@ public final class ChunkUpgrader {
 
     Future<Chunk> runStepTask(ChunkEntry entry, ChunkStep step, List<Chunk> chunks) {
         // TODO: reuse context objects
-        ChunkStepContext context = new ChunkStepContext(this.controller, entry, this.world, this.generator, this.structures, this.lighting, entry.getChunk(), chunks);
+        ChunkStepContext context = new ChunkStepContext(this.controller, entry, this.world, this.generator, this.structures, this.lighting, entry.getProtoChunk(), chunks);
 
         if (this.hasAlreadyUpgradedTo(entry, step)) {
             return step.runLoad(context);
@@ -76,7 +79,7 @@ public final class ChunkUpgrader {
     }
 
     private boolean hasAlreadyUpgradedTo(ChunkEntry entry, ChunkStep step) {
-        ProtoChunk currentChunk = entry.getChunk();
+        ProtoChunk currentChunk = entry.getProtoChunk();
         return currentChunk != null && currentChunk.getStatus().isAtLeast(step.getMaximumStatus());
     }
 

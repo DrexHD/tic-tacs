@@ -1,6 +1,6 @@
 package net.gegy1000.tictacs.chunk.step;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 public final class ChunkRequirements {
@@ -24,6 +24,10 @@ public final class ChunkRequirements {
 
     public ChunkRequirements write(ChunkStep step, int radius) {
         return this.add(ChunkRequirement.write(step), radius);
+    }
+
+    public ChunkRequirements require(ChunkStep step, int radius) {
+        return this.add(ChunkRequirement.require(step), radius);
     }
 
     public ChunkRequirements add(ChunkRequirement requirement, int radius) {

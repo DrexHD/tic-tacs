@@ -10,7 +10,7 @@ import net.gegy1000.tictacs.chunk.step.ChunkStep;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.Chunk;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.AbstractList;
 import java.util.Arrays;
 
@@ -148,9 +148,7 @@ final class ChunkUpgradeStepper {
             int sourceZ = targetZ + this.targetToSourceOffsetZ;
 
             ChunkEntry entry = this.source.getEntry(sourceX, sourceZ);
-
-            // TODO: could this be given a ReadOnlyChunk, causing feature generation to not work properly?
-            return entry.getChunk();
+            return entry.getProtoChunk();
         }
 
         @Override

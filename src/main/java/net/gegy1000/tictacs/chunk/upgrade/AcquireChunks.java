@@ -12,7 +12,7 @@ import net.gegy1000.tictacs.chunk.step.ChunkRequirement;
 import net.gegy1000.tictacs.chunk.step.ChunkRequirements;
 import net.gegy1000.tictacs.chunk.step.ChunkStep;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.function.Function;
 
@@ -138,11 +138,13 @@ final class AcquireChunks {
                     if (requirement != null) {
                         ChunkEntry entry = entries.getEntry(x, z);
                         ChunkAccessLock lock = entry.getLock();
+                        ChunkLockType lockType = requirement.step.getLock();
 
-                        ChunkLockType resource = requirement.step.getLock();
-                        boolean requireWrite = requirement.write;
-
-                        locks[idx] = requireWrite ? lock.write(resource) : lock.read(resource);
+                        if (requirement.write) {
+                            locks[idx] = lock.write(lockType);
+                        } else if (requirement.read) {
+                            locks[idx] = lock.read(lockType);
+                        }
                     }
                 }
             }

@@ -6,7 +6,8 @@ import net.gegy1000.justnow.tuple.Unit;
 import net.gegy1000.tictacs.chunk.ChunkController;
 import net.gegy1000.tictacs.chunk.ChunkLevelTracker;
 import net.gegy1000.tictacs.chunk.ChunkLockType;
-import net.gegy1000.tictacs.chunk.FutureHandle;
+import net.gegy1000.tictacs.chunk.future.FutureHandle;
+import net.gegy1000.tictacs.compatibility.TicTacsCompatibility;
 import net.gegy1000.tictacs.config.TicTacsConfig;
 import net.gegy1000.tictacs.mixin.TacsAccessor;
 import net.minecraft.server.world.ChunkTicketManager;
@@ -24,12 +25,14 @@ import net.minecraft.world.gen.GenerationStep;
 import net.minecraft.world.gen.GeneratorOptions;
 import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
+// TODO: separate loading chunk steps and generation chunk steps
+//       allow arbitrary tasks to be attached to steps
 public final class ChunkStep {
     private static final EnumSet<Heightmap.Type> REQUIRED_FEATURE_HEIGHTMAPS = EnumSet.of(
             Heightmap.Type.MOTION_BLOCKING,
@@ -73,15 +76,17 @@ public final class ChunkStep {
                             .read(ChunkStep.STRUCTURE_STARTS, 8)
             )
             .locks(ChunkLockType.LATE_GENERATION)
-            .upgradeSync(ChunkStep::addFeatures);
+            .upgradeAsync(ChunkStep::addFeatures)
+            .loadAsync(ChunkStep::loadFeatures);
 
     public static final ChunkStep LIGHTING = new ChunkStep("lighting")
             .includes(ChunkStatus.LIGHT)
             .requires(
                     ChunkRequirements.from(ChunkStep.FEATURES)
                             .read(ChunkStep.FEATURES, 1)
+                            .require(ChunkStep.FEATURES, 1 + TicTacsConfig.get().featureGenerationRadius)
             )
-            .locks(ChunkLockType.LATE_GENERATION)
+            .locks(ChunkLockType.FINALIZATION)
             .acquire(ChunkStep::acquireLight)
             .release(ChunkStep::releaseLight)
             .upgradeAsync(ctx -> ChunkStep.lightChunk(ctx, false))
@@ -90,7 +95,7 @@ public final class ChunkStep {
     public static final ChunkStep FULL = new ChunkStep("full")
             .includes(ChunkStatus.SPAWN, ChunkStatus.HEIGHTMAPS, ChunkStatus.FULL)
             .requires(ChunkRequirements.from(ChunkStep.LIGHTING))
-            .locks(ChunkLockType.LATE_GENERATION)
+            .locks(ChunkLockType.FINALIZATION)
             .upgradeAsync(ctx -> {
                 ChunkStep.addEntities(ctx);
                 return ChunkStep.makeFull(ctx);
@@ -98,7 +103,7 @@ public final class ChunkStep {
             .loadAsync(ChunkStep::makeFull);
 
     public static final ChunkStep GENERATION = ChunkStep.LIGHTING.getPrevious();
-    public static final ChunkStep MIN_WITH_LOAD_TASK = ChunkStep.LIGHTING;
+    public static final ChunkStep MIN_WITH_LOAD_TASK = TicTacsCompatibility.PHOSPHOR_LOADED ? ChunkStep.FEATURES : ChunkStep.LIGHTING;
 
     private static final ChunkStep[] STATUS_TO_STEP;
 
@@ -346,7 +351,7 @@ public final class ChunkStep {
         return chunk;
     }
 
-    private static Chunk addFeatures(ChunkStepContext ctx) {
+    private static Future<Chunk> addFeatures(ChunkStepContext ctx) {
         ProtoChunk proto = (ProtoChunk) ctx.chunk;
         proto.setLightingProvider(ctx.lighting);
 
@@ -355,10 +360,16 @@ public final class ChunkStep {
         ChunkRegion region = ctx.asRegion();
         ctx.generator.generateFeatures(region, ctx.world.getStructureAccessor().forRegion(region));
 
-        return ctx.chunk;
+        return TicTacsCompatibility.afterFeaturesStep(ctx);
+    }
+
+    private static Future<Chunk> loadFeatures(ChunkStepContext ctx) {
+        return TicTacsCompatibility.afterFeaturesStep(ctx);
     }
 
     private static Future<Chunk> lightChunk(ChunkStepContext ctx, boolean load) {
+        trySetStatus(ctx.chunk, ChunkStatus.LIGHT);
+
         ChunkTicketManager ticketManager = ctx.controller.getTicketManager();
 
         FutureHandle<Chunk> handle = new FutureHandle<>();

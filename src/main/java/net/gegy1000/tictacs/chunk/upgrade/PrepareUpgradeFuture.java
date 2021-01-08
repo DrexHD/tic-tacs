@@ -13,7 +13,7 @@ import net.gegy1000.tictacs.chunk.step.ChunkStep;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ProtoChunk;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 class PrepareUpgradeFuture implements Future<Result<ChunkUpgrade>> {
@@ -211,7 +211,7 @@ class PrepareUpgradeFuture implements Future<Result<ChunkUpgrade>> {
                 for (int x = -radius; x <= radius; x++) {
                     ChunkEntry entry = entries.getEntry(x, z);
 
-                    ProtoChunk chunk = entry.getChunk();
+                    ProtoChunk chunk = entry.getProtoChunk();
                     if (chunk != null) {
                         this.loadedChunks[kernel.index(x, z)] = chunk;
                     } else {

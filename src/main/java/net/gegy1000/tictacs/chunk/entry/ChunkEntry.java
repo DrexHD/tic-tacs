@@ -24,7 +24,7 @@ import net.minecraft.world.chunk.ReadOnlyChunk;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.chunk.light.LightingProvider;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
@@ -92,7 +92,7 @@ public final class ChunkEntry extends ChunkHolder {
     }
 
     public boolean canUpgradeTo(ChunkStep toStep) {
-        return this.isValidAs(toStep) && toStep.greaterThan(this.currentStep);
+        return this.isValidAs(toStep) && !this.isAt(toStep);
     }
 
     public boolean isValidAs(ChunkStep toStep) {
@@ -208,7 +208,7 @@ public final class ChunkEntry extends ChunkHolder {
     }
 
     @Nullable
-    public ProtoChunk getChunk() {
+    public ProtoChunk getProtoChunk() {
         return this.chunk;
     }
 
@@ -219,8 +219,26 @@ public final class ChunkEntry extends ChunkHolder {
     }
 
     @Nullable
+    public Chunk getChunk() {
+        WorldChunk worldChunk = this.worldChunk;
+        if (worldChunk != null) {
+            return worldChunk;
+        }
+        return this.chunk;
+    }
+
+    @Nullable
+    public Chunk getChunkAtLeast(ChunkStep step) {
+        if (this.isAt(step)) {
+            return this.getChunk();
+        } else {
+            return null;
+        }
+    }
+
+    @Nullable
     public Chunk getChunkForStep(ChunkStep step) {
-        if (step.greaterThan(this.currentStep)) {
+        if (!this.isAt(step)) {
             return null;
         }
 
@@ -229,6 +247,10 @@ public final class ChunkEntry extends ChunkHolder {
         } else {
             return this.chunk;
         }
+    }
+
+    public boolean isAt(ChunkStep step) {
+        return step.lessOrEqual(this.currentStep);
     }
 
     public void completeUpgradeOk(ChunkStep step, Chunk chunk) {
@@ -282,6 +304,10 @@ public final class ChunkEntry extends ChunkHolder {
     }
 
     public WorldChunk finalizeChunk(ServerWorld world, LongPredicate loadToWorld) {
+        if (this.worldChunk != null) {
+            throw new IllegalStateException("chunk already finalized!");
+        }
+
         WorldChunk worldChunk = unwrapWorldChunk(this.chunk);
         if (worldChunk == null) {
             worldChunk = this.upgradeToWorldChunk(world, this.chunk);
@@ -387,7 +413,7 @@ public final class ChunkEntry extends ChunkHolder {
     @Nullable
     @Deprecated
     public Chunk getCurrentChunk() {
-        return this.getChunk();
+        return this.getProtoChunk();
     }
 
     @Override

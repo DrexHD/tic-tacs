@@ -11,9 +11,9 @@ import net.gegy1000.tictacs.chunk.future.Result;
 import net.gegy1000.tictacs.chunk.step.ChunkStep;
 import net.minecraft.world.chunk.Chunk;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
-final class ChunkUpgradeFuture implements Future<Unit> {
+public final class ChunkUpgradeFuture implements Future<Unit> {
     final ChunkController controller;
 
     final ChunkEntry entry;
