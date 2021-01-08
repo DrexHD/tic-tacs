@@ -29,6 +29,8 @@ public abstract class EntityMixin {
 
 //    @Shadow private boolean chunkPosUpdateRequested;
 
+    @Shadow public abstract String getEntityName();
+
     @Inject(method = "move", at = @At("HEAD"), cancellable = true)
     private void move(MovementType type, Vec3d movement, CallbackInfo ci) {
         // skip entity move logic if the current chunk is not loaded

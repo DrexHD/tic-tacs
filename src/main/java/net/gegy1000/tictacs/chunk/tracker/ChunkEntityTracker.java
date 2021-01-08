@@ -156,7 +156,7 @@ public final class ChunkEntityTracker {
     private boolean canBeTrackedBy(ServerPlayerEntity player) {
         if (player == this.entry.entity) {
             return false;
-        } else if (player.teleporting) {
+        } else if (player.isInTeleportationState()) {
             return true;
         }
 

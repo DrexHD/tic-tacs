@@ -28,6 +28,7 @@
     "unblocking.EntityMixin",
     "unblocking.LivingEntityMixin",
     "unblocking.ServerChunkManagerMixin",
+    "unblocking.ServerPlayNetworkHandlerMixin",
     "unblocking.ServerWorldMixin",
     "unblocking.VoxelShapesMixin",
     "unblocking.WorldMixin"

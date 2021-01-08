@@ -54,7 +54,7 @@ public final class ChunkPackets {
                 LightingProvider lighting = this.chunk.getWorld().getLightingProvider();
 
                 this.dataPacket = new ChunkDataS2CPacket(this.chunk);
-                this.lightPacket = new LightUpdateS2CPacket(chunkPos, lighting, true);
+                this.lightPacket = new LightUpdateS2CPacket(chunkPos, lighting, null, null, true);
             }
 
             player.sendInitialChunkPackets(chunkPos, this.dataPacket, this.lightPacket);

@@ -1,7 +1,7 @@
 package net.gegy1000.tictacs.mixin.client;
 
 import net.gegy1000.tictacs.config.TicTacsConfig;
-import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.option.GameOptions;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;

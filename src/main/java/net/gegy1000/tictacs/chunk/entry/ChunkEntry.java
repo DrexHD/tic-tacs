@@ -6,6 +6,7 @@ import net.gegy1000.tictacs.chunk.ChunkController;
 import net.gegy1000.tictacs.chunk.ChunkLevelTracker;
 import net.gegy1000.tictacs.chunk.ChunkMap;
 import net.gegy1000.tictacs.chunk.step.ChunkStep;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.Packet;
@@ -294,10 +295,7 @@ public final class ChunkEntry extends ChunkHolder {
 
         if (loadToWorld.test(this.pos.toLong())) {
             worldChunk.setLoadedToWorld(true);
-//            world.addBlockEntities(worldChunk.getBlockEntities().values());
-//
-//            Collection<Entity> invalidEntities = this.tryAddEntitiesToWorld(world, worldChunk);
-//            invalidEntities.forEach(worldChunk::remove);
+            worldChunk.updateAllBlockEntityTickers();
         }
 
         worldChunk.disableTickSchedulers();
@@ -312,6 +310,7 @@ public final class ChunkEntry extends ChunkHolder {
         return worldChunk;
     }
 
+    //TODO:
 //    private Collection<Entity> tryAddEntitiesToWorld(ServerWorld world, WorldChunk chunk) {
 //        Collection<Entity> invalidEntities = new ArrayList<>();
 //

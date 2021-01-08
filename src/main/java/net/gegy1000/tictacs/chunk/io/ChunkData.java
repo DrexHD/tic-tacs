@@ -155,31 +155,31 @@ public final class ChunkData {
             return fluid == null || fluid == Fluids.EMPTY;
         }, chunkPos, levelTag.getList("LiquidsToBeTicked", NbtType.LIST), world);
 
-        ChunkSection[] sections = new ChunkSection[16];
-        boolean[] sectionHasPois = new boolean[16];
 
         boolean lightOn = levelTag.getBoolean("isLightOn");
         ChunkNibbleArray[] blockLightSections = lightOn ? new ChunkNibbleArray[18] : null;
         ChunkNibbleArray[] skyLightSections = lightOn ? new ChunkNibbleArray[18] : null;
 
         ListTag sectionsList = levelTag.getList("Sections", NbtType.COMPOUND);
+        int a = world.method_32890();
+        ChunkSection[] sections = new ChunkSection[a];
+        boolean[] sectionHasPois = new boolean[a];
 
         for (int i = 0; i < sectionsList.size(); i++) {
             CompoundTag sectionTag = sectionsList.getCompound(i);
             int sectionY = sectionTag.getByte("Y");
 
             if (sectionTag.contains("Palette", NbtType.LIST) && sectionTag.contains("BlockStates", NbtType.LONG_ARRAY)) {
-                ChunkSection section = new ChunkSection(sectionY << 4);
+                ChunkSection section = new ChunkSection(sectionY);
 
                 ListTag palette = sectionTag.getList("Palette", NbtType.COMPOUND);
                 long[] data = sectionTag.getLongArray("BlockStates");
                 section.getContainer().read(palette, data);
-
                 section.calculateCounts();
 
                 if (!section.isEmpty()) {
-                    sections[sectionY] = section;
-                    sectionHasPois[sectionY] = section.hasAny(PointOfInterestType.REGISTERED_STATES::contains);
+                    sections[world.getSectionIndexFromSection(sectionY)] = section;
+                    sectionHasPois[world.getSectionIndexFromSection(sectionY)] = section.hasAny(PointOfInterestType.REGISTERED_STATES::contains);
                 }
             }
 
@@ -356,8 +356,8 @@ public final class ChunkData {
 
         BiomeArray biomes = null;
         if (this.biomeIds != null || this.status.isAtLeast(ChunkStatus.BIOMES)) {
-            MutableRegistry<Biome> biomeRegistry = registryManager.get(Registry.BIOME_KEY);
-            biomes = new BiomeArray(biomeRegistry, this.pos, biomeSource, this.biomeIds);
+            MutableRegistry<Biome> biomeRegistry = (MutableRegistry<Biome>) registryManager.get(Registry.BIOME_KEY);
+            biomes = new BiomeArray(biomeRegistry, world, this.pos, biomeSource, this.biomeIds);
         }
 
         boolean lightOn = this.blockLightSections != null || this.skyLightSections != null;
@@ -501,7 +501,7 @@ public final class ChunkData {
                 BlockPos pos = new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z"));
                 BlockEntity entity = BlockEntity.createFromTag(pos, chunk.getBlockState(pos), tag);
                 if (entity != null) {
-                    chunk.addBlockEntity(entity);
+                    chunk.setBlockEntity(entity);
                 }
             } else {
                 chunk.addPendingBlockEntityTag(tag);
